@@ -15,7 +15,9 @@ A Windows desktop application that creates high-quality QR codes with custom col
 ## 🚀 Features
 - 🔹 **5 QR Types**: URL, Text, WiFi, Email, SMS.
 - 🔹 **Custom Colors**: Choose foreground and background colors.
-- 🔹 **Logo Overlay**: Embed your brand logo in the center.
+- 🔹 **Logo Overlay**: Embed your brand logo (in center or on top with frame).
+- 🖼 **Frame Mode**: Add decorative frame with logo on top, QR in middle, and custom text at bottom.
+- 🎨 **Frame Color Options**: Customize logo background, text color, and text background.
 - 🔹 **Batch Processing**: Import TXT/CSV files for bulk generation.
 - 🔹 **Export Options**: Save as PNG or SVG.
 - 🔹 **100% Local**: Privacy first — nothing leaves your device.

@@ -47,6 +47,12 @@ class ElsakrQRGenerator:
         self.bg_color = '#FFFFFF'
         self.logo_image = None
         self.current_qr_image = None
+        self.enable_frame = tk.BooleanVar(value=True)
+        self.frame_text = tk.StringVar(value='SCAN ME')
+        # Frame colors
+        self.logo_bg_color = '#FFFFFF'
+        self.text_color = '#FFFFFF'
+        self.text_bg_color = '#000000'
         
         # Configure styles
         self.configure_styles()
@@ -247,6 +253,68 @@ class ElsakrQRGenerator:
                  command=self.batch_import, relief=tk.FLAT, padx=15, pady=8,
                  cursor='hand2').pack(side=tk.LEFT)
         
+        # Frame settings
+        frame_settings = ttk.Frame(left_inner, style='Card.TFrame')
+        frame_settings.pack(fill=tk.X, pady=(0, 20))
+        
+        ttk.Label(frame_settings, text="Frame Settings", style='TLabel',
+                 background=self.colors['bg_secondary']).pack(anchor='w')
+        
+        frame_check_row = ttk.Frame(frame_settings, style='Card.TFrame')
+        frame_check_row.pack(fill=tk.X, pady=5)
+        
+        tk.Checkbutton(frame_check_row, text="Enable Frame", variable=self.enable_frame,
+                      bg=self.colors['bg_secondary'], fg=self.colors['text_primary'],
+                      selectcolor=self.colors['bg_tertiary'], activebackground=self.colors['bg_secondary'],
+                      activeforeground=self.colors['text_primary'],
+                      font=('Segoe UI', 10), command=self.on_frame_toggle).pack(side=tk.LEFT)
+        
+        frame_text_row = ttk.Frame(frame_settings, style='Card.TFrame')
+        frame_text_row.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(frame_text_row, text="Frame Text:", style='TLabel',
+                 background=self.colors['bg_secondary']).pack(side=tk.LEFT, padx=(0, 10))
+        
+        self.frame_text_entry = tk.Entry(frame_text_row, textvariable=self.frame_text,
+                                         bg=self.colors['bg_tertiary'], fg=self.colors['text_primary'],
+                                         font=('Segoe UI', 11), insertbackground=self.colors['text_primary'],
+                                         relief=tk.FLAT, bd=0, width=20)
+        self.frame_text_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=6)
+        
+        # Frame color options
+        frame_colors_row = ttk.Frame(frame_settings, style='Card.TFrame')
+        frame_colors_row.pack(fill=tk.X, pady=5)
+        
+        # Logo BG color
+        logo_bg_frame = ttk.Frame(frame_colors_row, style='Card.TFrame')
+        logo_bg_frame.pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(logo_bg_frame, text="Logo BG", style='TLabel',
+                 background=self.colors['bg_secondary'], font=('Segoe UI', 8)).pack(anchor='w')
+        self.logo_bg_btn = tk.Button(logo_bg_frame, bg=self.logo_bg_color, width=4, height=1,
+                                    command=lambda: self.choose_frame_color('logo_bg'),
+                                    relief=tk.FLAT, cursor='hand2')
+        self.logo_bg_btn.pack(anchor='w', pady=2)
+        
+        # Text color
+        text_color_frame = ttk.Frame(frame_colors_row, style='Card.TFrame')
+        text_color_frame.pack(side=tk.LEFT, padx=(0, 10))
+        ttk.Label(text_color_frame, text="Text", style='TLabel',
+                 background=self.colors['bg_secondary'], font=('Segoe UI', 8)).pack(anchor='w')
+        self.text_color_btn = tk.Button(text_color_frame, bg=self.text_color, width=4, height=1,
+                                       command=lambda: self.choose_frame_color('text'),
+                                       relief=tk.FLAT, cursor='hand2')
+        self.text_color_btn.pack(anchor='w', pady=2)
+        
+        # Text BG color
+        text_bg_frame = ttk.Frame(frame_colors_row, style='Card.TFrame')
+        text_bg_frame.pack(side=tk.LEFT)
+        ttk.Label(text_bg_frame, text="Text BG", style='TLabel',
+                 background=self.colors['bg_secondary'], font=('Segoe UI', 8)).pack(anchor='w')
+        self.text_bg_btn = tk.Button(text_bg_frame, bg=self.text_bg_color, width=4, height=1,
+                                    command=lambda: self.choose_frame_color('text_bg'),
+                                    relief=tk.FLAT, cursor='hand2')
+        self.text_bg_btn.pack(anchor='w', pady=2)
+        
         # Generate button
         generate_btn = tk.Button(left_inner, text="⚡ Generate QR Code",
                                 bg=self.colors['accent'], fg='white',
@@ -395,6 +463,32 @@ class ElsakrQRGenerator:
         self.bg_btn.configure(bg=self.bg_color)
         messagebox.showinfo("Colors Reset", "Colors have been reset to default Black & White.")
 
+    def on_frame_toggle(self):
+        """Toggle frame text entry based on checkbox"""
+        if self.enable_frame.get():
+            self.frame_text_entry.configure(state='normal')
+        else:
+            self.frame_text_entry.configure(state='disabled')
+
+    def choose_frame_color(self, color_type):
+        """Choose color for frame elements"""
+        titles = {
+            'logo_bg': 'Logo Background Color',
+            'text': 'Text Color',
+            'text_bg': 'Text Background Color'
+        }
+        color = colorchooser.askcolor(title=titles.get(color_type, 'Choose Color'))
+        if color[1]:
+            if color_type == 'logo_bg':
+                self.logo_bg_color = color[1]
+                self.logo_bg_btn.configure(bg=self.logo_bg_color)
+            elif color_type == 'text':
+                self.text_color = color[1]
+                self.text_color_btn.configure(bg=self.text_color)
+            elif color_type == 'text_bg':
+                self.text_bg_color = color[1]
+                self.text_bg_btn.configure(bg=self.text_bg_color)
+
     def create_input_fields(self):
         # Clear existing fields
         for widget in self.input_container.winfo_children():
@@ -539,8 +633,8 @@ class ElsakrQRGenerator:
                     # If pixel is light (white), use background color
                     pixels[x, y] = bg_rgb
         
-        # Add logo if present
-        if self.logo_image:
+        # Add logo in center ONLY if frame is disabled (when frame is enabled, logo goes on top inside frame)
+        if self.logo_image and not self.enable_frame.get():
             logo = self.logo_image.copy()
             logo_size = int(qr_image.size[0] * 0.25)
             logo = logo.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
@@ -557,13 +651,127 @@ class ElsakrQRGenerator:
             else:
                 qr_image.paste(logo, logo_pos)
         
+        # Add frame if enabled
+        if self.enable_frame.get():
+            qr_image = self.add_frame_to_qr(qr_image, fg_rgb, bg_rgb, self.frame_text.get() or 'SCAN ME')
+        
         self.current_qr_image = qr_image
         
         # Display in preview
         display_size = 250
-        display_img = qr_image.resize((display_size, display_size), Image.Resampling.LANCZOS)
+        # Calculate display size to fit in preview area
+        ratio = min(display_size / qr_image.width, display_size / qr_image.height)
+        new_size = (int(qr_image.width * ratio), int(qr_image.height * ratio))
+        display_img = qr_image.resize(new_size, Image.Resampling.LANCZOS)
         self.qr_photo = ImageTk.PhotoImage(display_img)
         self.qr_label.configure(image=self.qr_photo)
+    
+    def add_frame_to_qr(self, qr_image, fg_rgb, bg_rgb, frame_text):
+        """Add a decorative frame with logo on top, QR in middle, text at bottom"""
+        from PIL import ImageFont
+        
+        # Parse frame colors
+        def hex_to_rgb(hex_color):
+            hex_color = hex_color.lstrip('#')
+            return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+        
+        logo_bg_rgb = hex_to_rgb(self.logo_bg_color)
+        text_color_rgb = hex_to_rgb(self.text_color)
+        text_bg_rgb = hex_to_rgb(self.text_bg_color)
+        
+        padding = 20
+        border_width = 10
+        text_height = 50
+        border_radius = 20
+        logo_area_height = 80 if self.logo_image else 0
+        logo_size = 60
+        
+        total_width = qr_image.width + (padding * 2) + (border_width * 2)
+        total_height = qr_image.height + (padding * 2) + (border_width * 2) + text_height + logo_area_height
+        
+        # Create new image for framed QR
+        framed = Image.new('RGB', (total_width, total_height), bg_rgb)
+        draw = ImageDraw.Draw(framed)
+        
+        # Draw outer rounded rectangle border
+        draw.rounded_rectangle(
+            [0, 0, total_width - 1, total_height - 1],
+            radius=border_radius,
+            fill=fg_rgb,
+            outline=fg_rgb
+        )
+        
+        # Draw inner rounded rectangle (background)
+        draw.rounded_rectangle(
+            [border_width, border_width, total_width - border_width - 1, total_height - border_width - 1],
+            radius=border_radius - 5,
+            fill=bg_rgb,
+            outline=bg_rgb
+        )
+        
+        current_y = border_width + padding
+        
+        # Draw logo at top if present
+        if self.logo_image:
+            logo = self.logo_image.copy()
+            # Resize logo
+            logo = logo.resize((logo_size, logo_size), Image.Resampling.LANCZOS)
+            
+            # Draw logo background
+            logo_bg_x = (total_width - logo_size - 20) // 2
+            logo_bg_y = current_y
+            draw.rounded_rectangle(
+                [logo_bg_x, logo_bg_y, logo_bg_x + logo_size + 20, logo_bg_y + logo_size + 10],
+                radius=8,
+                fill=logo_bg_rgb
+            )
+            
+            # Paste logo
+            logo_x = (total_width - logo_size) // 2
+            logo_y = current_y + 5
+            if logo.mode == 'RGBA':
+                framed.paste(logo.convert('RGB'), (logo_x, logo_y))
+            else:
+                framed.paste(logo, (logo_x, logo_y))
+            
+            current_y += logo_size + 20
+        
+        # Paste QR code
+        qr_x = border_width + padding
+        qr_y = current_y
+        framed.paste(qr_image, (qr_x, qr_y))
+        
+        current_y += qr_image.height + 5
+        
+        # Draw text background
+        text_bg_padding = 10
+        text_bg_width = total_width - (border_width * 2) - (padding * 2) + (text_bg_padding * 2)
+        text_bg_x = border_width + padding - text_bg_padding
+        text_bg_y = current_y
+        draw.rounded_rectangle(
+            [text_bg_x, text_bg_y, text_bg_x + text_bg_width, text_bg_y + text_height - 10],
+            radius=8,
+            fill=text_bg_rgb
+        )
+        
+        # Draw frame text
+        try:
+            font = ImageFont.truetype("arial.ttf", 24)
+        except:
+            try:
+                font = ImageFont.truetype("Arial.ttf", 24)
+            except:
+                font = ImageFont.load_default()
+        
+        text = frame_text.upper()
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        text_x = (total_width - text_width) // 2
+        text_y = current_y + (text_height - 10) // 2 - (text_bbox[3] - text_bbox[1]) // 2
+        
+        draw.text((text_x, text_y), text, fill=text_color_rgb, font=font)
+        
+        return framed
     
     def save_qr(self, format_type):
         if self.current_qr_image is None:
